@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import DashboardPage from './pages/DashboardPage';
 import AIActionsPage from './pages/AIActionsPage';
 import InternalItemsPage from './pages/InternalItemsPage';
+import LandingPage from './pages/LandingPage';
 import AuthWrapper from './components/AuthWrapper';
 import Navigation from './components/Navigation';
 
@@ -29,24 +30,56 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <div className="min-h-screen">
-        {isAuthenticated ? (
-          <div className="flex min-h-screen">
-            <Navigation />
-            <div className="flex-1 overflow-x-hidden lg:ml-0">
-              <div className="lg:ml-0">
-                <Routes>
-                <Route path="/" element={<AIActionsPage />} />
-                <Route path="/actions" element={<AIActionsPage />} />
-                <Route path="/items" element={<InternalItemsPage />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-
-                </Routes>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <AuthWrapper />
-        )}
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/register" element={<LandingPage />} />
+          {isAuthenticated ? (
+            <>
+              <Route path="/app" element={
+                <div className="flex min-h-screen">
+                  <Navigation />
+                  <div className="flex-1 overflow-x-hidden lg:ml-0">
+                    <div className="lg:ml-0">
+                      <AIActionsPage />
+                    </div>
+                  </div>
+                </div>
+              } />
+              <Route path="/actions" element={
+                <div className="flex min-h-screen">
+                  <Navigation />
+                  <div className="flex-1 overflow-x-hidden lg:ml-0">
+                    <div className="lg:ml-0">
+                      <AIActionsPage />
+                    </div>
+                  </div>
+                </div>
+              } />
+              <Route path="/items" element={
+                <div className="flex min-h-screen">
+                  <Navigation />
+                  <div className="flex-1 overflow-x-hidden lg:ml-0">
+                    <div className="lg:ml-0">
+                      <InternalItemsPage />
+                    </div>
+                  </div>
+                </div>
+              } />
+              <Route path="/dashboard" element={
+                <div className="flex min-h-screen">
+                  <Navigation />
+                  <div className="flex-1 overflow-x-hidden lg:ml-0">
+                    <div className="lg:ml-0">
+                      <DashboardPage />
+                    </div>
+                  </div>
+                </div>
+              } />
+            </>
+          ) : (
+            <Route path="/login" element={<AuthWrapper />} />
+          )}
+        </Routes>
       </div>
     </Router>
   );

@@ -1,10 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
 
 const AuthWrapper: React.FC = () => {
+  const navigate = useNavigate();
+  
   const handleLoginSuccess = () => {
-    // This will be handled by the AuthContext
-    // The user will be redirected to the main app
+    // Navigate to /app after successful login
+    navigate('/app');
   };
 
   return (

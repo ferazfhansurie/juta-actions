@@ -84,7 +84,7 @@ const Navigation: React.FC = () => {
                 <img 
                   src="/logo.png" 
                   alt="Juta AI Logo" 
-                  className="w-6 h-6 lg:w-8 lg:h-8 object-contain"
+                  className="w-6 h-6 lg:w-16 lg:h-16 object-contain"
                   onError={(e) => {
                     // Fallback to icon if logo fails to load
                     const target = e.currentTarget as HTMLImageElement;

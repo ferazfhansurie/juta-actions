@@ -8,6 +8,11 @@ import LandingPage from './pages/LandingPage';
 import AuthWrapper from './components/AuthWrapper';
 import Navigation from './components/Navigation';
 
+// Component to handle register route for marketing
+const RegisterHandler: React.FC = () => {
+  return <LandingPage />;
+};
+
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -31,8 +36,8 @@ const AppContent: React.FC = () => {
     <Router>
       <div className="min-h-screen">
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/register" element={<LandingPage />} />
+          <Route path="/" element={<Navigate to={isAuthenticated ? "/app" : "/login"} replace />} />
+          <Route path="/register" element={<RegisterHandler />} />
           {isAuthenticated ? (
             <>
               <Route path="/app" element={

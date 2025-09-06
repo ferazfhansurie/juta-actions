@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import DashboardPage from './pages/DashboardPage';
 import AIActionsPage from './pages/AIActionsPage';
 import InternalItemsPage from './pages/InternalItemsPage';
+import NotesPage from './pages/NotesPage';
 import LandingPage from './pages/LandingPage';
 import AuthWrapper from './components/AuthWrapper';
 import Navigation from './components/Navigation';
@@ -66,6 +67,16 @@ const AppContent: React.FC = () => {
                   <div className="flex-1 overflow-x-hidden lg:ml-0">
                     <div className="lg:ml-0">
                       <InternalItemsPage />
+                    </div>
+                  </div>
+                </div>
+              } />
+              <Route path="/notes" element={
+                <div className="flex min-h-screen">
+                  <Navigation />
+                  <div className="flex-1 overflow-x-hidden lg:ml-0">
+                    <div className="lg:ml-0">
+                      <NotesPage />
                     </div>
                   </div>
                 </div>

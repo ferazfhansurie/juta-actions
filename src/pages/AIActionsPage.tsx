@@ -12,8 +12,8 @@ const AIActionsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showActionDetails, setShowActionDetails] = useState<string | null>(null);
 
-  // Define action categories
-  const categories = [
+  // Define action categories with memoization to prevent jittery renders
+  const categories = useMemo(() => [
     { id: 'all', name: 'All', icon: MessageSquare, count: pendingActions.length },
     { id: 'event', name: 'Events', icon: Calendar, count: pendingActions.filter(a => a.type === 'event').length },
     { id: 'task', name: 'Tasks', icon: CheckSquare, count: pendingActions.filter(a => a.type === 'task' || a.type === 'reminder').length },
@@ -27,7 +27,7 @@ const AIActionsPage: React.FC = () => {
     { id: 'travel', name: 'Travel', icon: Plane, count: pendingActions.filter(a => a.type === 'travel').length },
     { id: 'creative', name: 'Creative', icon: Lightbulb, count: pendingActions.filter(a => a.type === 'creative').length },
     { id: 'admin', name: 'Admin', icon: FileText, count: pendingActions.filter(a => a.type === 'administrative').length },
-  ];
+  ], [pendingActions]);
 
   // Filter actions based on selected category
   const filteredActions = useMemo(() => {

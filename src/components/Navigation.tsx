@@ -39,11 +39,18 @@ const Navigation: React.FC = () => {
       description: 'WhatsApp message actions' 
     },
     { 
+      to: '/notes', 
+      icon: Archive, 
+      label: 'Brain Dump',
+      description: 'Notes & thoughts' 
+    },
+    { 
       to: '/items', 
       icon: Database, 
       label: 'Internal Items',
       description: 'All your items' 
     },
+   
     { 
       to: '/dashboard', 
       icon: TrendingUp, 
@@ -101,9 +108,9 @@ const Navigation: React.FC = () => {
             </div>
             <div>
               <h1 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                Juta AI
+                Second Brain
               </h1>
-              <p className="text-xs text-white/60 font-medium">Intelligent Actions</p>
+              <p className="text-xs text-white/60 font-medium">By Juta Teknologi Sdn Bhd</p>
             </div>
           </div>
         </div>

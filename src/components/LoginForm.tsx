@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Phone, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -6,19 +6,37 @@ interface LoginFormProps {
   onSuccess: () => void;
 }
 
-// Preset phone numbers that are allowed to login
-const PRESET_PHONE_NUMBERS = [
-    '+601121677522',
-    '+601121677672',
-    '+60126268707',
-    '+60126851668'
-];
-
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authorizedNumbers, setAuthorizedNumbers] = useState<string[]>([]);
+  const [isLoadingNumbers, setIsLoadingNumbers] = useState(true);
   const { login } = useAuth();
+
+  // Load authorized phone numbers from API
+  useEffect(() => {
+    const loadAuthorizedNumbers = async () => {
+      try {
+        setIsLoadingNumbers(true);
+        const response = await fetch('http://localhost:3002/api/auth/authorized-numbers');
+        const data = await response.json();
+        
+        if (data.success) {
+          setAuthorizedNumbers(data.phoneNumbers);
+        } else {
+          setError('Failed to load authorized numbers');
+        }
+      } catch (err) {
+        console.error('Error loading authorized numbers:', err);
+        setError('Failed to connect to server');
+      } finally {
+        setIsLoadingNumbers(false);
+      }
+    };
+
+    loadAuthorizedNumbers();
+  }, []);
 
   const formatPhoneNumber = (value: string) => {
     // Remove all non-numeric characters
@@ -43,8 +61,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   };
 
   const validatePhoneNumber = (phone: string) => {
-    // Check if phone number is in preset list
-    return PRESET_PHONE_NUMBERS.includes(phone);
+    // Check if phone number is in authorized numbers list
+    return authorizedNumbers.includes(phone);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,9 +133,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               </div>
             )}
 
+            {isLoadingNumbers && (
+              <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-yellow-400 border-t-transparent"></div>
+                <span>Loading authorized numbers...</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={isSubmitting || !phoneNumber}
+              disabled={isSubmitting || !phoneNumber || isLoadingNumbers}
               className="w-full flex items-center justify-center space-x-2 px-6 py-3 glass-button text-white rounded-xl hover:shadow-glass-hover transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (

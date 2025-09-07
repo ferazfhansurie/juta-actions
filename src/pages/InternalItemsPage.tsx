@@ -26,7 +26,9 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
-  MapPin
+  MapPin,
+  User,
+  ShoppingBag
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -57,6 +59,17 @@ interface InternalItem {
   is_pinned?: boolean;
   severity?: string;
   completion_percentage?: number;
+  
+  // Additional missing fields
+  repeat_type?: string;
+  attendees?: any[];
+  estimated_hours?: number;
+  assigned_to?: string;
+  doctor_name?: string;
+  due_date?: string;
+  destination?: string;
+  quantity?: number;
+  estimated_duration?: number;
 }
 
 interface ItemCounts {
@@ -73,7 +86,7 @@ const InternalItemsPage: React.FC = () => {
   
   // Filters
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('active');
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -107,8 +120,54 @@ const InternalItemsPage: React.FC = () => {
   ];
 
   const statusOptions = [
-    'active', 'completed', 'cancelled', 'in_progress', 'snoozed', 'archived', 'resolved', 'closed'
+    'active', 'completed', 'cancelled', 'in_progress', 'snoozed', 'archived', 'resolved', 'closed', 'deleted'
   ];
+
+  // Get valid statuses for each item type
+  const getValidStatusesForType = (itemType: string): string[] => {
+    const validStatuses: Record<string, string[]> = {
+      reminder: ['active', 'completed', 'cancelled', 'snoozed'],
+      event: ['active', 'completed', 'cancelled', 'attended'],
+      task: ['active', 'completed', 'cancelled', 'in_progress'],
+      note: ['active', 'archived', 'deleted'],
+      contact: ['active', 'completed', 'cancelled'],
+      issue: ['active', 'resolved', 'closed', 'in_progress'],
+      learning: ['active', 'completed', 'cancelled', 'in_progress'],
+      finance: ['active', 'completed', 'cancelled'],
+      health: ['active', 'completed', 'cancelled'],
+      shopping: ['active', 'completed', 'cancelled'],
+      travel: ['active', 'completed', 'cancelled'],
+      creative: ['active', 'completed', 'cancelled', 'in_progress'],
+      administrative: ['active', 'completed', 'cancelled']
+    };
+
+    return validStatuses[itemType] || ['active', 'completed', 'cancelled'];
+  };
+
+  // Map generic status to item-type specific status (for backwards compatibility)
+  const getValidStatusForType = (itemType: string, genericStatus: string): string => {
+    const validStatuses = getValidStatusesForType(itemType);
+    
+    // If the generic status is already valid for this type, use it
+    if (validStatuses.includes(genericStatus)) {
+      return genericStatus;
+    }
+
+    // Otherwise, map common generic statuses to type-specific ones
+    const statusMappings: Record<string, Record<string, string>> = {
+      note: {
+        'completed': 'archived',
+        'cancelled': 'deleted'
+      },
+      issue: {
+        'completed': 'resolved',
+        'cancelled': 'closed'
+      }
+    };
+
+    const mapped = statusMappings[itemType]?.[genericStatus];
+    return mapped && validStatuses.includes(mapped) ? mapped : genericStatus;
+  };
 
   const priorityOptions = [
     { key: 'low', label: 'Low', color: 'text-green-400' },
@@ -118,17 +177,24 @@ const InternalItemsPage: React.FC = () => {
   ];
 
   useEffect(() => {
-    fetchAllItems();
-  }, []);
+    if (user?.id) {
+      fetchAllItems();
+    }
+  }, [user]);
 
   useEffect(() => {
     applyFilters();
   }, [items, selectedType, selectedStatus, selectedPriority, searchTerm, sortField, sortDirection]);
 
   const fetchAllItems = async () => {
+    if (!user?.id) {
+      console.error('User ID not available');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/all/1`, {
+      const response = await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/all/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -224,6 +290,14 @@ const InternalItemsPage: React.FC = () => {
   };
 
   const updateItemStatus = async (item: InternalItem, newStatus: string) => {
+    if (!user?.id) {
+      console.error('User ID not available');
+      return;
+    }
+    
+    // Convert generic status to item-type specific status
+    const validStatus = getValidStatusForType(item.item_type, newStatus);
+    
     try {
       const token = localStorage.getItem('authToken');
       const response = await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/status/${item.item_type}/${item.id}`, {
@@ -232,17 +306,17 @@ const InternalItemsPage: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: newStatus, userId: 1 })
+        body: JSON.stringify({ status: validStatus, userId: user.id })
       });
 
       const data = await response.json();
       
       if (data.success) {
-        // Update local state
+        // Update local state with the valid status
         setItems(prevItems => 
           prevItems.map(i => 
             i.id === item.id && i.item_type === item.item_type 
-              ? { ...i, status: newStatus } 
+              ? { ...i, status: validStatus } 
               : i
           )
         );
@@ -252,6 +326,47 @@ const InternalItemsPage: React.FC = () => {
     } catch (error) {
       console.error('Error updating item status:', error);
       setError('Failed to update item status');
+    }
+  };
+
+  const deleteItemPermanently = async (item: InternalItem) => {
+    if (!user?.id) {
+      console.error('User ID not available');
+      return;
+    }
+    
+    const confirmDelete = window.confirm('Are you sure you want to permanently delete this item? This action cannot be undone.');
+    
+    if (!confirmDelete) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/${item.item_type}/${item.id}?userId=${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove item from local state
+        setItems(prevItems => 
+          prevItems.filter(i => 
+            !(i.id === item.id && i.item_type === item.item_type)
+          )
+        );
+        closeModal();
+      } else {
+        setError('Failed to delete item permanently');
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      setError('Failed to delete item permanently');
     }
   };
 
@@ -297,6 +412,207 @@ const InternalItemsPage: React.FC = () => {
     }
     
     return formatDate(item.created_at);
+  };
+
+  // Get additional relevant details for each item type
+  const getItemDetails = (item: InternalItem): string[] => {
+    const details: string[] = [];
+
+    switch (item.item_type) {
+      case 'reminder':
+        if (item.reminder_datetime) {
+          details.push(`⏰ ${formatDate(item.reminder_datetime)}`);
+        }
+        if (item.repeat_type && item.repeat_type !== 'none') {
+          details.push(`🔄 ${item.repeat_type}`);
+        }
+        break;
+
+      case 'event':
+        if (item.event_datetime) {
+          details.push(`📅 ${formatDate(item.event_datetime)}`);
+        }
+        if (item.location) {
+          details.push(`📍 ${item.location}`);
+        }
+        if (item.attendees && Array.isArray(item.attendees) && item.attendees.length > 0) {
+          details.push(`👥 ${item.attendees.length} attendees`);
+        }
+        break;
+
+      case 'task':
+        if (item.due_datetime) {
+          details.push(`📋 Due: ${formatDate(item.due_datetime)}`);
+        }
+        if (item.estimated_hours) {
+          details.push(`⏱️ ${item.estimated_hours}h est.`);
+        }
+        break;
+
+      case 'issue':
+        if (item.severity) {
+          details.push(`🔥 ${item.severity}`);
+        }
+        if (item.assigned_to) {
+          details.push(`👤 ${item.assigned_to}`);
+        }
+        break;
+
+      case 'health':
+        if (item.appointment_datetime) {
+          details.push(`🏥 ${formatDate(item.appointment_datetime)}`);
+        }
+        if (item.doctor_name) {
+          details.push(`👨‍⚕️ Dr. ${item.doctor_name}`);
+        }
+        break;
+
+      case 'finance':
+        if (item.amount) {
+          details.push(`💰 ${item.currency || 'USD'} ${item.amount}`);
+        }
+        if (item.due_date) {
+          details.push(`📅 Due: ${formatDate(item.due_date)}`);
+        }
+        break;
+
+      case 'travel':
+        if (item.departure_date) {
+          details.push(`✈️ ${formatDate(item.departure_date)}`);
+        }
+        if (item.destination) {
+          details.push(`🎯 ${item.destination}`);
+        }
+        break;
+
+      case 'shopping':
+        if (item.quantity) {
+          details.push(`📦 Qty: ${item.quantity}`);
+        }
+        if (item.estimated_price) {
+          details.push(`💵 ~$${item.estimated_price}`);
+        }
+        break;
+
+      case 'learning':
+        if (item.estimated_duration) {
+          details.push(`📚 ${item.estimated_duration} min`);
+        }
+        if (item.completion_percentage) {
+          details.push(`📊 ${item.completion_percentage}%`);
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return details;
+  };
+
+  // Get comprehensive modal details for each item type
+  const getModalDetails = (item: InternalItem) => {
+    const sections: Array<{title: string, items: Array<{icon: any, label: string, value: string, color?: string}>}> = [];
+
+    switch (item.item_type) {
+      case 'reminder':
+        sections.push({
+          title: 'Reminder Details',
+          items: [
+            ...(item.reminder_datetime ? [{icon: Clock, label: 'Reminder Time', value: formatDate(item.reminder_datetime) || '', color: 'text-blue-400'}] : []),
+            ...(item.repeat_type && item.repeat_type !== 'none' ? [{icon: Activity, label: 'Repeat', value: item.repeat_type, color: 'text-green-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'event':
+        sections.push({
+          title: 'Event Details',
+          items: [
+            ...(item.event_datetime ? [{icon: Calendar, label: 'Event Date', value: formatDate(item.event_datetime) || '', color: 'text-green-400'}] : []),
+            ...(item.end_datetime ? [{icon: Clock, label: 'End Time', value: formatDate(item.end_datetime) || '', color: 'text-orange-400'}] : []),
+            ...(item.location ? [{icon: MapPin, label: 'Location', value: item.location, color: 'text-blue-400'}] : []),
+            ...(item.attendees && Array.isArray(item.attendees) && item.attendees.length > 0 ? [{icon: User, label: 'Attendees', value: `${item.attendees.length} people`, color: 'text-purple-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'task':
+        sections.push({
+          title: 'Task Details',
+          items: [
+            ...(item.due_datetime ? [{icon: AlertTriangle, label: 'Due Date', value: formatDate(item.due_datetime) || '', color: 'text-red-400'}] : []),
+            ...(item.estimated_hours ? [{icon: Clock, label: 'Estimated Time', value: `${item.estimated_hours} hours`, color: 'text-yellow-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'issue':
+        sections.push({
+          title: 'Issue Details',
+          items: [
+            ...(item.severity ? [{icon: AlertTriangle, label: 'Severity', value: item.severity, color: item.severity === 'critical' ? 'text-red-400' : item.severity === 'major' ? 'text-orange-400' : 'text-yellow-400'}] : []),
+            ...(item.assigned_to ? [{icon: User, label: 'Assigned To', value: item.assigned_to, color: 'text-blue-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'health':
+        sections.push({
+          title: 'Health Details',
+          items: [
+            ...(item.appointment_datetime ? [{icon: Calendar, label: 'Appointment', value: formatDate(item.appointment_datetime) || '', color: 'text-green-400'}] : []),
+            ...(item.doctor_name ? [{icon: User, label: 'Doctor', value: `Dr. ${item.doctor_name}`, color: 'text-blue-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'finance':
+        sections.push({
+          title: 'Financial Details',
+          items: [
+            ...(item.amount ? [{icon: DollarSign, label: 'Amount', value: `${item.currency || 'USD'} ${item.amount}`, color: 'text-green-400'}] : []),
+            ...(item.due_date ? [{icon: Clock, label: 'Due Date', value: formatDate(item.due_date) || '', color: 'text-red-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'travel':
+        sections.push({
+          title: 'Travel Details',
+          items: [
+            ...(item.departure_date ? [{icon: Plane, label: 'Departure', value: formatDate(item.departure_date) || '', color: 'text-blue-400'}] : []),
+            ...(item.return_date ? [{icon: Plane, label: 'Return', value: formatDate(item.return_date) || '', color: 'text-green-400'}] : []),
+            ...(item.destination ? [{icon: MapPin, label: 'Destination', value: item.destination, color: 'text-purple-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'shopping':
+        sections.push({
+          title: 'Shopping Details',
+          items: [
+            ...(item.quantity ? [{icon: ShoppingBag, label: 'Quantity', value: item.quantity.toString(), color: 'text-blue-400'}] : []),
+            ...(item.estimated_price ? [{icon: DollarSign, label: 'Est. Price', value: `$${item.estimated_price}`, color: 'text-green-400'}] : [])
+          ]
+        });
+        break;
+
+      case 'learning':
+        sections.push({
+          title: 'Learning Details',
+          items: [
+            ...(item.estimated_duration ? [{icon: Clock, label: 'Duration', value: `${item.estimated_duration} minutes`, color: 'text-blue-400'}] : []),
+            ...(item.completion_percentage !== undefined ? [{icon: Activity, label: 'Progress', value: `${item.completion_percentage}%`, color: 'text-green-400'}] : [])
+          ]
+        });
+        break;
+
+      default:
+        break;
+    }
+
+    return sections.filter(section => section.items.length > 0);
   };
 
 
@@ -494,9 +810,18 @@ const InternalItemsPage: React.FC = () => {
                           <div className="text-sm font-medium text-white truncate max-w-xs">
                             {item.title}
                           </div>
-                          <div className="text-xs text-white/60 truncate max-w-xs">
+                          <div className="text-xs text-white/60 truncate max-w-xs mb-1">
                             {item.content.length > 50 ? `${item.content.substring(0, 50)}...` : item.content}
                           </div>
+                          {getItemDetails(item).length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {getItemDetails(item).slice(0, 2).map((detail, index) => (
+                                <span key={index} className="text-xs bg-white/10 text-white/80 px-2 py-0.5 rounded">
+                                  {detail}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -513,7 +838,10 @@ const InternalItemsPage: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
                         item.status === 'active' ? 'bg-green-500/20 text-green-300 border border-green-400/30' :
-                        item.status === 'completed' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                        item.status === 'completed' || item.status === 'resolved' || item.status === 'archived' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                        item.status === 'cancelled' || item.status === 'closed' || item.status === 'deleted' ? 'bg-red-500/20 text-red-300 border border-red-400/30' :
+                        item.status === 'in_progress' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' :
+                        item.status === 'snoozed' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30' :
                         'bg-white/10 text-white/70 border border-white/20'
                       }`}>
                         {item.status}
@@ -533,33 +861,20 @@ const InternalItemsPage: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {item.status === 'active' && (
-                          <button
-                            onClick={() => updateItemStatus(item, 'completed')}
-                            className="p-2 rounded-lg text-green-400 hover:bg-green-400/20 hover:scale-110 transition-all duration-200 shadow-lg"
-                            title="Mark as completed"
+                        <div className="relative">
+                          <select
+                            value={item.status}
+                            onChange={(e) => updateItemStatus(item, e.target.value)}
+                            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:bg-white/20 focus:border-white/40 focus:outline-none min-w-[100px]"
+                            title="Change status"
                           >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-                        {item.status === 'active' && (
-                          <button
-                            onClick={() => updateItemStatus(item, 'cancelled')}
-                            className="p-2 rounded-lg text-red-400 hover:bg-red-400/20 hover:scale-110 transition-all duration-200 shadow-lg"
-                            title="Cancel"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
-                        {item.status === 'completed' && (
-                          <button
-                            onClick={() => updateItemStatus(item, 'active')}
-                            className="p-2 rounded-lg text-blue-400 hover:bg-blue-400/20 hover:scale-110 transition-all duration-200 shadow-lg"
-                            title="Reactivate"
-                          >
-                            <Activity className="w-4 h-4" />
-                          </button>
-                        )}
+                            {getValidStatusesForType(item.item_type).map((status) => (
+                              <option key={status} value={status} className="bg-gray-800 text-white">
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -589,9 +904,18 @@ const InternalItemsPage: React.FC = () => {
                         <h3 className="text-sm font-medium text-white truncate">
                           {item.title}
                         </h3>
-                        <p className="text-xs text-white/60 truncate">
+                        <p className="text-xs text-white/60 truncate mb-2">
                           {item.content.length > 60 ? `${item.content.substring(0, 60)}...` : item.content}
                         </p>
+                        {getItemDetails(item).length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {getItemDetails(item).slice(0, 2).map((detail, index) => (
+                              <span key={index} className="text-xs bg-white/10 text-white/80 px-2 py-0.5 rounded">
+                                {detail}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <button
@@ -613,7 +937,10 @@ const InternalItemsPage: React.FC = () => {
                     </span>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
                       item.status === 'active' ? 'bg-green-500/20 text-green-300 border border-green-400/30' :
-                      item.status === 'completed' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                      item.status === 'completed' || item.status === 'resolved' || item.status === 'archived' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                      item.status === 'cancelled' || item.status === 'closed' || item.status === 'deleted' ? 'bg-red-500/20 text-red-300 border border-red-400/30' :
+                      item.status === 'in_progress' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' :
+                      item.status === 'snoozed' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30' :
                       'bg-white/10 text-white/70 border border-white/20'
                     }`}>
                       {item.status}
@@ -626,33 +953,18 @@ const InternalItemsPage: React.FC = () => {
                       {relevantDate}
                     </div>
                     <div className="flex items-center space-x-1">
-                      {item.status === 'active' && (
-                        <button
-                          onClick={() => updateItemStatus(item, 'completed')}
-                          className="p-1.5 rounded-lg text-green-400 hover:bg-green-400/20 transition-all duration-200"
-                          title="Mark as completed"
-                        >
-                          <Check className="w-3 h-3" />
-                        </button>
-                      )}
-                      {item.status === 'active' && (
-                        <button
-                          onClick={() => updateItemStatus(item, 'cancelled')}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-400/20 transition-all duration-200"
-                          title="Cancel"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                      {item.status === 'completed' && (
-                        <button
-                          onClick={() => updateItemStatus(item, 'active')}
-                          className="p-1.5 rounded-lg text-blue-400 hover:bg-blue-400/20 transition-all duration-200"
-                          title="Reactivate"
-                        >
-                          <Activity className="w-3 h-3" />
-                        </button>
-                      )}
+                      <select
+                        value={item.status}
+                        onChange={(e) => updateItemStatus(item, e.target.value)}
+                        className="bg-white/10 backdrop-blur-sm border border-white/20 rounded text-xs text-white focus:bg-white/20 focus:border-white/40 focus:outline-none px-2 py-1"
+                        title="Change status"
+                      >
+                        {getValidStatusesForType(item.item_type).map((status) => (
+                          <option key={status} value={status} className="bg-gray-800 text-white">
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -739,7 +1051,10 @@ const InternalItemsPage: React.FC = () => {
                         </span>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
                           selectedItem.status === 'active' ? 'bg-green-500/20 text-green-300 border border-green-400/30' :
-                          selectedItem.status === 'completed' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                          selectedItem.status === 'completed' || selectedItem.status === 'resolved' || selectedItem.status === 'archived' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                          selectedItem.status === 'cancelled' || selectedItem.status === 'closed' || selectedItem.status === 'deleted' ? 'bg-red-500/20 text-red-300 border border-red-400/30' :
+                          selectedItem.status === 'in_progress' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' :
+                          selectedItem.status === 'snoozed' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30' :
                           'bg-white/10 text-white/70 border border-white/20'
                         }`}>
                           {selectedItem.status}
@@ -762,95 +1077,76 @@ const InternalItemsPage: React.FC = () => {
                   {/* Content */}
                   <div>
                     <h3 className="text-sm font-semibold text-white/80 mb-2">Description</h3>
-                    <p className="text-white/90 leading-relaxed">{selectedItem.content}</p>
+                    <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                      <p className="text-white/90 leading-relaxed">{selectedItem.content}</p>
+                    </div>
                   </div>
 
-                  {/* Dates */}
+                  {/* Status Selector */}
                   <div>
-                    <h3 className="text-sm font-semibold text-white/80 mb-2 lg:mb-3">Timeline</h3>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Clock className="w-4 h-4 text-white/60" />
-                          <span className="text-white/70">Created:</span>
-                          <span className="text-white">{formatDate(selectedItem.created_at)}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Activity className="w-4 h-4 text-white/60" />
-                          <span className="text-white/70">Updated:</span>
-                          <span className="text-white">{formatDate(selectedItem.updated_at)}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Type-specific dates */}
-                      {selectedItem.reminder_datetime && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Clock className="w-4 h-4 text-blue-400" />
-                          <span className="text-white/70">Reminder:</span>
-                          <span className="text-white">{formatDate(selectedItem.reminder_datetime)}</span>
-                        </div>
-                      )}
-                      {selectedItem.event_datetime && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Calendar className="w-4 h-4 text-green-400" />
-                          <span className="text-white/70">Event:</span>
-                          <span className="text-white">{formatDate(selectedItem.event_datetime)}</span>
-                        </div>
-                      )}
-                      {selectedItem.due_datetime && (
-                        <div className="flex items-center space-x-2 text-sm">
-                          <AlertTriangle className="w-4 h-4 text-red-400" />
-                          <span className="text-white/70">Due:</span>
-                          <span className="text-white">{formatDate(selectedItem.due_datetime)}</span>
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="text-sm font-semibold text-white/80 mb-2">Status</h3>
+                    <select
+                      value={selectedItem.status}
+                      onChange={(e) => updateItemStatus(selectedItem, e.target.value)}
+                      className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-white focus:bg-white/20 focus:border-white/40 focus:outline-none"
+                    >
+                      {getValidStatusesForType(selectedItem.item_type).map((status) => (
+                        <option key={status} value={status} className="bg-gray-800 text-white">
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  {/* Type-specific information */}
-                  {(selectedItem.amount || selectedItem.estimated_price || selectedItem.location || selectedItem.completion_percentage !== undefined) && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-white/80 mb-2 lg:mb-3">Additional Details</h3>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                        {selectedItem.amount && (
-                          <div className="flex items-center space-x-2 text-sm">
-                            <DollarSign className="w-4 h-4 text-green-400" />
-                            <span className="text-white/70">Amount:</span>
-                            <span className="text-white font-semibold">
-                              {selectedItem.currency || 'USD'} {selectedItem.amount}
-                            </span>
-                          </div>
-                        )}
-                        {selectedItem.estimated_price && (
-                          <div className="flex items-center space-x-2 text-sm">
-                            <DollarSign className="w-4 h-4 text-orange-400" />
-                            <span className="text-white/70">Estimated Price:</span>
-                            <span className="text-white font-semibold">${selectedItem.estimated_price}</span>
-                          </div>
-                        )}
-                        {selectedItem.location && (
-                          <div className="flex items-center space-x-2 text-sm">
-                            <MapPin className="w-4 h-4 text-blue-400" />
-                            <span className="text-white/70">Location:</span>
-                            <span className="text-white">{selectedItem.location}</span>
-                          </div>
-                        )}
-                        {selectedItem.completion_percentage !== undefined && (
-                          <div className="flex items-center space-x-2 text-sm">
-                            <Activity className="w-4 h-4 text-purple-400" />
-                            <span className="text-white/70">Progress:</span>
-                            <span className="text-white font-semibold">{selectedItem.completion_percentage}%</span>
-                          </div>
-                        )}
+                  {/* Type-Specific Details */}
+                  {getModalDetails(selectedItem).map((section, sectionIndex) => (
+                    <div key={sectionIndex}>
+                      <h3 className="text-sm font-semibold text-white/80 mb-3">{section.title}</h3>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {section.items.map((item, itemIndex) => {
+                          const Icon = item.icon;
+                          return (
+                            <div key={itemIndex} className="flex items-center space-x-3 bg-white/5 rounded-lg p-3 border border-white/10">
+                              <Icon className={`w-4 h-4 ${item.color || 'text-white/60'} flex-shrink-0`} />
+                              <div className="min-w-0 flex-1">
+                                <span className="text-white/70 text-sm">{item.label}:</span>
+                                <span className="text-white font-medium ml-2">{item.value}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
+                  ))}
+
+                  {/* Timeline */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-white/80 mb-3">Timeline</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      <div className="flex items-center space-x-3 bg-white/5 rounded-lg p-3 border border-white/10">
+                        <Clock className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                        <div>
+                          <span className="text-white/70 text-sm">Created:</span>
+                          <span className="text-white font-medium ml-2">{formatDate(selectedItem.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 bg-white/5 rounded-lg p-3 border border-white/10">
+                        <Activity className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <div>
+                          <span className="text-white/70 text-sm">Updated:</span>
+                          <span className="text-white font-medium ml-2">{formatDate(selectedItem.updated_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Action ID */}
                   {selectedItem.action_id && (
                     <div>
                       <h3 className="text-sm font-semibold text-white/80 mb-2">Action ID</h3>
-                      <p className="text-white/70 font-mono text-sm">{selectedItem.action_id}</p>
+                      <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                        <p className="text-white/70 font-mono text-sm">{selectedItem.action_id}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -858,24 +1154,27 @@ const InternalItemsPage: React.FC = () => {
 
               {/* Modal Footer */}
               <div className="px-4 lg:px-6 py-3 lg:py-4 border-t border-white/20">
-                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-end space-y-2 lg:space-y-0 lg:space-x-3">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/15 hover:border-white/30 transition-all duration-300 text-sm font-medium"
-                  >
-                    Close
-                  </button>
-                  {selectedItem.status === 'active' && (
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between space-y-2 lg:space-y-0">
+                  {/* Left side - Destructive actions */}
+                  <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => {
-                        updateItemStatus(selectedItem, 'completed');
-                        closeModal();
-                      }}
-                      className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg text-green-300 hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-300 text-sm font-medium"
+                      onClick={() => deleteItemPermanently(selectedItem)}
+                      className="px-4 py-2 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg text-red-300 hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-300 text-sm font-medium flex items-center space-x-2"
                     >
-                      Mark as Completed
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete Permanently</span>
                     </button>
-                  )}
+                  </div>
+
+                  {/* Right side - Primary actions */}
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/15 hover:border-white/30 transition-all duration-300 text-sm font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

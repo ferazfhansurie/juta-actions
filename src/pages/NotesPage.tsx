@@ -10,6 +10,7 @@ import {
   X,
   Brain
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Note {
   id: string;
@@ -20,6 +21,7 @@ interface Note {
 }
 
 const NotesPage: React.FC = () => {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -30,13 +32,20 @@ const NotesPage: React.FC = () => {
 
   // Fetch notes from API on component mount
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (user?.id) {
+      fetchNotes();
+    }
+  }, [user]);
 
   const fetchNotes = async () => {
+    if (!user?.id) {
+      console.error('User ID not available');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('https://c4ba947d9455f026.ngrok.app/api/internal-items/type/note/1', {
+      const response = await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/type/note/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -97,7 +106,7 @@ const NotesPage: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: 1,
+          userId: user?.id,
           content: content,
           title: content.split('\n')[0] || 'Brain Dump Note'
         })
@@ -180,7 +189,7 @@ const NotesPage: React.FC = () => {
     // Delete from API
     try {
       const token = localStorage.getItem('authToken');
-      await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/note/${noteId}?userId=1`, {
+      await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/note/${noteId}?userId=${user?.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

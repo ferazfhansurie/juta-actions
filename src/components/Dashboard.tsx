@@ -31,7 +31,9 @@ import {
   Database,
   Cpu,
   Wifi,
-  WifiOff
+  WifiOff,
+  Send,
+  PenTool
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -49,13 +51,21 @@ const Dashboard: React.FC<DashboardProps> = ({ pendingActions, connectionStatus 
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTimeframe, setSelectedTimeframe] = useState('today');
+  const [showQuickCapture, setShowQuickCapture] = useState(false);
+  const [quickCaptureText, setQuickCaptureText] = useState('');
 
   // Fetch internal items data
   useEffect(() => {
     const fetchInternalItems = async () => {
+      if (!user?.id) {
+        console.error('User ID not available');
+        setLoading(false);
+        return;
+      }
+      
       try {
         const token = localStorage.getItem('authToken');
-        const response = await fetch('https://c4ba947d9455f026.ngrok.app/api/internal-items/all/1', {
+        const response = await fetch(`https://c4ba947d9455f026.ngrok.app/api/internal-items/all/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -76,7 +86,24 @@ const Dashboard: React.FC<DashboardProps> = ({ pendingActions, connectionStatus 
     };
 
     fetchInternalItems();
-  }, []);
+  }, [user]);
+
+  const handleQuickCapture = async () => {
+    if (!quickCaptureText.trim()) return;
+    
+    try {
+      // Here you would typically send the text to your API
+      console.log('Quick capture text:', quickCaptureText);
+      
+      // Reset the form
+      setQuickCaptureText('');
+      setShowQuickCapture(false);
+      
+      // Show success message or handle the response
+    } catch (error) {
+      console.error('Error capturing text:', error);
+    }
+  };
   // Calculate comprehensive statistics
   const totalActions = pendingActions.length;
   const urgentActions = pendingActions.filter(a => a.details?.priority === 'urgent').length;
@@ -396,47 +423,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pendingActions, connectionStatus 
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="relative overflow-hidden rounded-xl bg-white/10 backdrop-blur-xl border border-white/20">
-          <div className="p-3 lg:p-4 border-b border-white/20">
-            <div className="flex items-center space-x-2">
-              <Target className="w-4 h-4 lg:w-5 lg:h-5 text-white/70" />
-              <h2 className="text-base lg:text-lg font-semibold gradient-text">Quick Actions</h2>
-            </div>
-          </div>
-          <div className="p-3 lg:p-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
-              <button className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-3 p-2 lg:p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 text-center lg:text-left">
-                <Calendar className="w-4 h-4 lg:w-5 lg:h-5 text-purple-300 mx-auto lg:mx-0" />
-                <div>
-                  <p className="text-xs lg:text-sm font-medium text-white">Schedule Event</p>
-                  <p className="text-xs text-white/60 hidden lg:block">Create new event</p>
-                </div>
-              </button>
-              <button className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-3 p-2 lg:p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 text-center lg:text-left">
-                <CheckSquare className="w-4 h-4 lg:w-5 lg:h-5 text-blue-300 mx-auto lg:mx-0" />
-                <div>
-                  <p className="text-xs lg:text-sm font-medium text-white">Add Task</p>
-                  <p className="text-xs text-white/60 hidden lg:block">Create new task</p>
-                </div>
-              </button>
-              <button className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-3 p-2 lg:p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 text-center lg:text-left">
-                <BookOpen className="w-4 h-4 lg:w-5 lg:h-5 text-green-300 mx-auto lg:mx-0" />
-                <div>
-                  <p className="text-xs lg:text-sm font-medium text-white">Take Note</p>
-                  <p className="text-xs text-white/60 hidden lg:block">Save information</p>
-                </div>
-              </button>
-              <button className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-3 p-2 lg:p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 text-center lg:text-left">
-                <Search className="w-4 h-4 lg:w-5 lg:h-5 text-orange-300 mx-auto lg:mx-0" />
-                <div>
-                  <p className="text-xs lg:text-sm font-medium text-white">Search Items</p>
-                  <p className="text-xs text-white/60 hidden lg:block">Find anything</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );

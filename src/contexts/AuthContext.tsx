@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
+  id: number;
   phoneNumber: string;
   name?: string;
   isVerified: boolean;

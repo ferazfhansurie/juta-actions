@@ -19,7 +19,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     const loadAuthorizedNumbers = async () => {
       try {
         setIsLoadingNumbers(true);
-        const response = await fetch('http://localhost:3002/api/auth/authorized-numbers');
+        const response = await fetch('https://c4ba947d9455f026.ngrok.app/api/auth/authorized-numbers');
         const data = await response.json();
         
         if (data.success) {

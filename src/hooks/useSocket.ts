@@ -68,6 +68,7 @@ export const useSocket = () => {
     
     try {
       const token = localStorage.getItem('authToken');
+      console.log('🔄 Fetching actions from API...');
       const response = await fetch('https://c4ba947d9455f026.ngrok.app/api/actions', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -76,6 +77,8 @@ export const useSocket = () => {
       const data = await response.json();
       
       if (data.success) {
+        console.log(`📥 API returned ${data.actions.length} actions:`, data.actions.map(a => `${a.type}: ${a.description}`));
+        
         const formattedActions = data.actions.map((action: any) => ({
           actionId: action.action_id,
           type: action.type,
@@ -93,10 +96,12 @@ export const useSocket = () => {
             ? JSON.parse(action.original_message)
             : action.original_message
         }));
+        
+        console.log(`✅ Formatted ${formattedActions.length} actions for frontend`);
         setPendingActions(formattedActions);
       }
     } catch (error) {
-      console.error('Error fetching actions:', error);
+      console.error('❌ Error fetching actions:', error);
     }
   }, [user]);
 
@@ -152,11 +157,45 @@ export const useSocket = () => {
     });
 
     newSocket.on('newAction', (action) => {
-      setPendingActions(prev => [action, ...prev]);
+      console.log('🔔 Socket received newAction:', {
+        actionId: action.actionId,
+        type: action.type,
+        description: action.description,
+        timestamp: new Date().toISOString()
+      });
+      setPendingActions(prev => {
+        // Check if action already exists
+        const existingAction = prev.find(a => a.actionId === action.actionId);
+        if (existingAction) {
+          console.log('🔄 Action already exists, skipping duplicate:', action.actionId);
+          return prev;
+        }
+        
+        const newActions = [action, ...prev];
+        console.log(`📊 Total actions after socket update: ${newActions.length}`);
+        
+        // Check for duplicates
+        const actionIds = newActions.map(a => a.actionId);
+        const uniqueIds = new Set(actionIds);
+        if (actionIds.length !== uniqueIds.size) {
+          console.warn('⚠️ DUPLICATE ACTION IDs DETECTED:', {
+            total: actionIds.length,
+            unique: uniqueIds.size,
+            duplicates: actionIds.filter((id, index) => actionIds.indexOf(id) !== index)
+          });
+        }
+        
+        return newActions;
+      });
     });
 
     newSocket.on('actionProcessed', ({ actionId }) => {
-      setPendingActions(prev => prev.filter(action => action.actionId !== actionId));
+      console.log('✅ Socket received actionProcessed:', actionId);
+      setPendingActions(prev => {
+        const filtered = prev.filter(action => action.actionId !== actionId);
+        console.log(`📊 Actions after processing: ${filtered.length} (removed ${prev.length - filtered.length})`);
+        return filtered;
+      });
     });
 
     setSocket(newSocket);

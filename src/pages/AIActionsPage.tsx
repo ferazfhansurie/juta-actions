@@ -15,6 +15,29 @@ const AIActionsPage: React.FC = () => {
   const [selectedActionIndex, setSelectedActionIndex] = useState<number>(-1);
   const actionsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Track pendingActions changes for debugging
+  useEffect(() => {
+    console.log(`📊 PendingActions updated: ${pendingActions.length} actions`);
+    if (pendingActions.length > 0) {
+      console.log('📋 Current actions:', pendingActions.map(a => ({
+        actionId: a.actionId,
+        type: a.type,
+        description: a.description.substring(0, 50) + '...'
+      })));
+      
+      // Check for duplicates in pendingActions
+      const actionIds = pendingActions.map(a => a.actionId);
+      const uniqueIds = new Set(actionIds);
+      if (actionIds.length !== uniqueIds.size) {
+        console.error('🚨 DUPLICATE ACTIONS IN PENDING LIST:', {
+          total: actionIds.length,
+          unique: uniqueIds.size,
+          duplicates: actionIds.filter((id, index) => actionIds.indexOf(id) !== index)
+        });
+      }
+    }
+  }, [pendingActions]);
+
   // Define action categories with memoization to prevent jittery renders
   const categories = useMemo(() => [
     { id: 'all', name: 'All', icon: MessageSquare, count: pendingActions.length },
@@ -34,8 +57,14 @@ const AIActionsPage: React.FC = () => {
 
   // Filter actions based on selected category
   const filteredActions = useMemo(() => {
-    if (selectedCategory === 'all') return pendingActions;
-    return pendingActions.filter(action => {
+    console.log(`🔍 Filtering actions: ${pendingActions.length} total, category: ${selectedCategory}`);
+    
+    if (selectedCategory === 'all') {
+      console.log(`📋 Displaying all ${pendingActions.length} actions`);
+      return pendingActions;
+    }
+    
+    const filtered = pendingActions.filter(action => {
       switch (selectedCategory) {
         case 'task': return action.type === 'task' || action.type === 'reminder';
         case 'question': return action.type === 'question' || action.type === 'follow_up';
@@ -44,6 +73,22 @@ const AIActionsPage: React.FC = () => {
         default: return action.type === selectedCategory;
       }
     });
+    
+    console.log(`📋 Displaying ${filtered.length} filtered actions for category: ${selectedCategory}`);
+    
+    // Check for duplicates in filtered actions
+    const actionIds = filtered.map(a => a.actionId);
+    const uniqueIds = new Set(actionIds);
+    if (actionIds.length !== uniqueIds.size) {
+      console.error('🚨 DUPLICATE ACTIONS IN FILTERED LIST:', {
+        total: actionIds.length,
+        unique: uniqueIds.size,
+        duplicates: actionIds.filter((id, index) => actionIds.indexOf(id) !== index),
+        category: selectedCategory
+      });
+    }
+    
+    return filtered;
   }, [pendingActions, selectedCategory]);
 
   // Get action type color and icon

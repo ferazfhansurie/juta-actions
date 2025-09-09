@@ -249,8 +249,8 @@ const LandingPage: React.FC = () => {
           <div className="text-center">
             {/* Logo */}
             <div className="mb-8">
-              <div className="mx-auto w-20 h-20 glass-card rounded-2xl flex items-center justify-center mb-6 float">
-                <img src="/logo.png" alt="Juta AI" className="w-10 h-10" />
+              <div className="mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-6 float">
+                <img src="/logo.png" alt="Juta AI" className="w-20 h-20 object-contain rounded-2xl" />
               </div>
               <h1 className="text-4xl lg:text-6xl font-bold gradient-text mb-6">
                 Your AI-Powered

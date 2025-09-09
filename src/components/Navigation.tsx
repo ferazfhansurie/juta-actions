@@ -87,11 +87,11 @@ const Navigation: React.FC = () => {
         <div className="p-4 lg:p-6 border-b border-white/10">
           <div className="flex items-center space-x-3 lg:space-x-4">
             <div className="relative">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl flex items-center justify-center">
                 <img 
                   src="/logo.png" 
                   alt="Juta AI Logo" 
-                  className="w-6 h-6 lg:w-16 lg:h-16 object-contain"
+                  className="w-10 h-10 lg:w-12 lg:h-12 object-contain rounded-2xl"
                   onError={(e) => {
                     // Fallback to icon if logo fails to load
                     const target = e.currentTarget as HTMLImageElement;

@@ -38,7 +38,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
   return (
     <div className="glass-card rounded-xl shadow-glass flex flex-col h-96">
       <div className="flex items-center space-x-3 compact-padding border-b border-white/10">
-        <img src="/logo.png" alt="Juta AI" className="w-5 h-5" />
+        <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+          <img src="/logo.png" alt="Juta AI" className="w-6 h-6 object-contain rounded-lg" />
+        </div>
         <h2 className="text-lg font-semibold gradient-text">Juta AI Assistant</h2>
         <div className={`w-2 h-2 rounded-full ${isConnected ? 'status-on pulse-glow' : 'status-off'}`}></div>
       </div>

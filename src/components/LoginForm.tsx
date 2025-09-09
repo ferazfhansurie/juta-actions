@@ -97,10 +97,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           <div className="glass-card rounded-2xl compact-padding text-center">
           {/* Logo */}
           <div className="mb-8">
-            <div className="mx-auto w-16 h-16 glass-card rounded-2xl flex items-center justify-center mb-4 float">
-              <img src="/logo.png" alt="Juta AI" className="w-22 h-22" />
+            <div className="mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-4 float">
+              <img src="/logo.png" alt="Juta AI" className="w-20 h-20 object-contain rounded-2xl" />
             </div>
-            <h1 className="text-2xl font-bold gradient-text mb-2">Welcome to Juta AI</h1>
+            <h1 className="text-2xl font-bold gradient-text mb-2">Welcome to Second Brain</h1>
             <p className="text-white/70">Enter your authorized phone number to access the system</p>
           </div>
 

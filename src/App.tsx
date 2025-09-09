@@ -22,8 +22,8 @@ const AppContent: React.FC = () => {
       <div className="flex h-screen">
         <div className="flex-1 flex items-center justify-center">
           <div className="glass-card rounded-2xl compact-padding text-center">
-            <div className="mx-auto w-16 h-16 glass-card rounded-2xl flex items-center justify-center mb-4 float">
-              <img src="/logo.png" alt="Juta AI" className="w-8 h-8" />
+            <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 float">
+              <img src="/logo.png" alt="Juta AI" className="w-16 h-16 object-contain rounded-2xl" />
             </div>
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-4"></div>
             <p className="text-white/70">Loading...</p>

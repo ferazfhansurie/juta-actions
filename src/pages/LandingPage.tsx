@@ -35,7 +35,10 @@ import {
   Eye,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
+  Video,
+  MoreVertical,
+  Send
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -49,58 +52,72 @@ const LandingPage: React.FC = () => {
   const demoActions = [
     {
       type: 'reminder',
-      description: 'Remind me to call John tomorrow at 2pm',
-      fromName: 'Sarah',
-      chatName: 'Work Team',
-      isGroup: true,
+      description: 'Team, esok meeting kul 2pm tau',
+      fromName: 'Customer',
+      chatName: 'Customer Support',
+      isGroup: false,
       timestamp: Date.now() / 1000 - 300,
       priority: 'medium',
       details: {
-        title: 'Call John',
+        title: 'Team meeting',
         time: 'Tomorrow at 2:00 PM',
         priority: 'medium'
       }
     },
     {
       type: 'event',
-      description: 'Schedule a meeting with the marketing team next Friday',
-      fromName: 'Mike',
-      chatName: null,
+      description: 'Hi, can we schedule a call next week to discuss the project proposal?',
+      fromName: 'Client',
+      chatName: 'Project Discussion',
       isGroup: false,
       timestamp: Date.now() / 1000 - 600,
       priority: 'high',
       details: {
-        title: 'Marketing Team Meeting',
-        time: 'Next Friday',
+        title: 'Project Call',
+        time: 'Next week',
         priority: 'high'
       }
     },
     {
       type: 'task',
-      description: 'Add to my todo list - review the quarterly report',
-      fromName: 'Lisa',
-      chatName: 'Management',
-      isGroup: true,
+      description: 'Please send me the invoice for last month\'s services',
+      fromName: 'Business Partner',
+      chatName: null,
+      isGroup: false,
       timestamp: Date.now() / 1000 - 900,
       priority: 'urgent',
       details: {
-        title: 'Review Quarterly Report',
+        title: 'Send Invoice',
         time: 'ASAP',
         priority: 'urgent'
       }
     },
     {
       type: 'note',
-      description: 'Note this down - the new office address is 123 Main St',
-      fromName: 'David',
-      chatName: null,
-      isGroup: false,
+      description: 'The new product launch is scheduled for March 15th, just wanted to keep you updated',
+      fromName: 'Product Manager',
+      chatName: 'Product Updates',
+      isGroup: true,
       timestamp: Date.now() / 1000 - 1200,
       priority: 'low',
       details: {
-        title: 'New Office Address',
-        content: '123 Main Street',
+        title: 'Product Launch Update',
+        content: 'March 15th',
         priority: 'low'
+      }
+    },
+    {
+      type: 'issue',
+      description: 'I\'m having trouble accessing the dashboard, can you help?',
+      fromName: 'Customer',
+      chatName: 'Support',
+      isGroup: false,
+      timestamp: Date.now() / 1000 - 1500,
+      priority: 'high',
+      details: {
+        title: 'Dashboard Access Issue',
+        time: 'Immediate',
+        priority: 'high'
       }
     }
   ];
@@ -345,58 +362,333 @@ const LandingPage: React.FC = () => {
               See It In Action
             </h2>
             <p className="text-xl text-white/70 max-w-2xl mx-auto">
-              Watch how Juta AI automatically detects and categorizes actions from your WhatsApp conversations
+              Watch how Juta AI automatically detects and categorizes actions from customer messages and conversations
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Demo Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start max-w-6xl mx-auto">
+            {/* Demo Phone 1 - Meeting Reminder */}
             <div className="relative">
+              <h3 className="text-lg font-bold text-white mb-4 text-center">Meeting Reminder</h3>
+              
+              {/* AI Detection Indicator */}
+              <div className="bg-purple-500/20 border border-purple-400/30 rounded-lg p-3 mb-4 max-w-sm mx-auto">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Brain className="w-4 h-4 text-purple-300" />
+                  <span className="text-purple-300 text-sm font-semibold">AI DETECTED ACTION</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-4 h-4 text-red-400" />
+                  <span className="text-white text-sm">Reminder Scheduled:</span>
+                </div>
+                <p className="text-white text-sm ml-6">Team meeting – 2:00 PM</p>
+              </div>
+
               <div className="glass-card rounded-3xl p-6 max-w-sm mx-auto">
-                <div className="bg-black rounded-2xl p-4 relative overflow-hidden">
-                  {/* Phone Header */}
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    </div>
-                    <div className="text-white text-sm font-medium">WhatsApp</div>
-                    <div className="w-6 h-6"></div>
-                  </div>
-
-                  {/* Chat Messages */}
-                  <div className="space-y-3">
-                    <div className="flex justify-end">
-                      <div className="bg-green-500 text-white p-3 rounded-lg max-w-xs">
-                        <p className="text-sm">Hey, remind me to call John tomorrow at 2pm</p>
-                        <p className="text-xs text-green-100 mt-1">2:30 PM</p>
+                <div className="bg-gray-900 rounded-2xl relative overflow-hidden">
+                  {/* WhatsApp Header */}
+                  <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold text-sm">Customer</h4>
+                        <p className="text-green-100 text-xs">online</p>
                       </div>
                     </div>
-                    <div className="flex justify-start">
-                      <div className="bg-white/10 text-white p-3 rounded-lg max-w-xs">
-                        <p className="text-sm">Sure! I'll remind you</p>
-                        <p className="text-xs text-white/60 mt-1">2:31 PM</p>
+                    <div className="flex items-center space-x-4">
+                      <Phone className="w-5 h-5 text-white" />
+                      <Video className="w-5 h-5 text-white" />
+                      <MoreVertical className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Chat Background */}
+                  <div className="bg-gray-100 p-4 min-h-64" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f0f0f0" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}>
+                    {/* Chat Messages */}
+                    <div className="space-y-3">
+                      <div className="flex justify-start">
+                        <div className="flex items-end space-x-2">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            C
+                          </div>
+                          <div className="bg-white rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-gray-800">Team, esok meeting kul 2pm tau</p>
+                            <p className="text-xs text-gray-500 mt-1">2:30 PM</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="flex items-end space-x-2">
+                          <div className="bg-green-500 rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-white">Orait bos</p>
+                            <p className="text-xs text-green-100 mt-1">2:31 PM</p>
+                          </div>
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            U
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* AI Detection Indicator */}
-                  <div className="mt-4 p-3 bg-purple-500/20 border border-purple-400/30 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Brain className="w-4 h-4 text-purple-300" />
-                      <span className="text-purple-300 text-sm font-semibold">AI Detected Action</span>
+                  {/* Input Area */}
+                  <div className="bg-white px-4 py-3 flex items-center space-x-3 border-t border-gray-200">
+                    <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center">
+                      <span className="text-gray-500 text-sm">Type a message</span>
                     </div>
-                    <p className="text-white text-sm">Reminder: Call John tomorrow at 2:00 PM</p>
+                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                      <Send className="w-5 h-5 text-white" />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Demo Phone 2 - Customer Service Issue */}
+            <div className="relative">
+              <h3 className="text-lg font-bold text-white mb-4 text-center">Support Issue</h3>
+              
+              {/* AI Detection Indicator */}
+              <div className="bg-purple-500/20 border border-purple-400/30 rounded-lg p-3 mb-4 max-w-sm mx-auto">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Brain className="w-4 h-4 text-purple-300" />
+                  <span className="text-purple-300 text-sm font-semibold">AI DETECTED ACTION</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <span className="text-white text-sm">Support Ticket Created:</span>
+                </div>
+                <p className="text-white text-sm ml-6">Dashboard access issue – Priority: High</p>
+              </div>
+
+              <div className="glass-card rounded-3xl p-6 max-w-sm mx-auto">
+                <div className="bg-gray-900 rounded-2xl relative overflow-hidden">
+                  {/* WhatsApp Header */}
+                  <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold text-sm">Customer</h4>
+                        <p className="text-green-100 text-xs">online</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Phone className="w-5 h-5 text-white" />
+                      <Video className="w-5 h-5 text-white" />
+                      <MoreVertical className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Chat Background */}
+                  <div className="bg-gray-100 p-4 min-h-64" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f0f0f0" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}>
+                    {/* Chat Messages */}
+                    <div className="space-y-3">
+                      <div className="flex justify-start">
+                        <div className="flex items-end space-x-2">
+                          <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            C
+                          </div>
+                          <div className="bg-white rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-gray-800">I'm having trouble accessing the dashboard, can you help?</p>
+                            <p className="text-xs text-gray-500 mt-1">3:45 PM</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="flex items-end space-x-2">
+                          <div className="bg-green-500 rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-white">Ok bos lemme check</p>
+                            <p className="text-xs text-green-100 mt-1">3:46 PM</p>
+                          </div>
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            U
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="bg-white px-4 py-3 flex items-center space-x-3 border-t border-gray-200">
+                    <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center">
+                      <span className="text-gray-500 text-sm">Type a message</span>
+                    </div>
+                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                      <Send className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Phone 3 - Event Scheduling */}
+            <div className="relative">
+              <h3 className="text-lg font-bold text-white mb-4 text-center">Event Scheduling</h3>
+              
+              {/* AI Detection Indicator */}
+              <div className="bg-purple-500/20 border border-purple-400/30 rounded-lg p-3 mb-4 max-w-sm mx-auto">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Brain className="w-4 h-4 text-purple-300" />
+                  <span className="text-purple-300 text-sm font-semibold">AI DETECTED ACTION</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                  <span className="text-white text-sm">Meeting Scheduled:</span>
+                </div>
+                <p className="text-white text-sm ml-6">Project proposal call – Next week</p>
+              </div>
+
+              <div className="glass-card rounded-3xl p-6 max-w-sm mx-auto">
+                <div className="bg-gray-900 rounded-2xl relative overflow-hidden">
+                  {/* WhatsApp Header */}
+                  <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold text-sm">Client</h4>
+                        <p className="text-green-100 text-xs">online</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Phone className="w-5 h-5 text-white" />
+                      <Video className="w-5 h-5 text-white" />
+                      <MoreVertical className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Chat Background */}
+                  <div className="bg-gray-100 p-4 min-h-64" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f0f0f0" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}>
+                    {/* Chat Messages */}
+                    <div className="space-y-3">
+                      <div className="flex justify-start">
+                        <div className="flex items-end space-x-2">
+                          <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            C
+                          </div>
+                          <div className="bg-white rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-gray-800">Hi, can we schedule a call next week to discuss the project proposal?</p>
+                            <p className="text-xs text-gray-500 mt-1">4:15 PM</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="flex items-end space-x-2">
+                          <div className="bg-green-500 rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-white">Ok can bos</p>
+                            <p className="text-xs text-green-100 mt-1">4:16 PM</p>
+                          </div>
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            U
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="bg-white px-4 py-3 flex items-center space-x-3 border-t border-gray-200">
+                    <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center">
+                      <span className="text-gray-500 text-sm">Type a message</span>
+                    </div>
+                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                      <Send className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Phone 4 - Task Assignment */}
+            <div className="relative">
+              <h3 className="text-lg font-bold text-white mb-4 text-center">Task Assignment</h3>
+              
+              {/* AI Detection Indicator */}
+              <div className="bg-purple-500/20 border border-purple-400/30 rounded-lg p-3 mb-4 max-w-sm mx-auto">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Brain className="w-4 h-4 text-purple-300" />
+                  <span className="text-purple-300 text-sm font-semibold">AI DETECTED ACTION</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckSquare className="w-4 h-4 text-yellow-400" />
+                  <span className="text-white text-sm">Task Created:</span>
+                </div>
+                <p className="text-white text-sm ml-6">Send invoice – Priority: Urgent</p>
+              </div>
+
+              <div className="glass-card rounded-3xl p-6 max-w-sm mx-auto">
+                <div className="bg-gray-900 rounded-2xl relative overflow-hidden">
+                  {/* WhatsApp Header */}
+                  <div className="bg-green-600 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold text-sm">Business Partner</h4>
+                        <p className="text-green-100 text-xs">online</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Phone className="w-5 h-5 text-white" />
+                      <Video className="w-5 h-5 text-white" />
+                      <MoreVertical className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Chat Background */}
+                  <div className="bg-gray-100 p-4 min-h-64" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f0f0f0" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}>
+                    {/* Chat Messages */}
+                    <div className="space-y-3">
+                      <div className="flex justify-start">
+                        <div className="flex items-end space-x-2">
+                          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            C
+                          </div>
+                          <div className="bg-white rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-gray-800">Please send me the invoice for last month's services</p>
+                            <p className="text-xs text-gray-500 mt-1">5:30 PM</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="flex items-end space-x-2">
+                          <div className="bg-green-500 rounded-lg p-3 max-w-xs shadow-sm">
+                            <p className="text-sm text-white">I'll get that to you right away</p>
+                            <p className="text-xs text-green-100 mt-1">5:31 PM</p>
+                          </div>
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            U
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="bg-white px-4 py-3 flex items-center space-x-3 border-t border-gray-200">
+                    <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center">
+                      <span className="text-gray-500 text-sm">Type a message</span>
+                    </div>
+                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                      <Send className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            </div>
+
             {/* Live Action Feed */}
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-white mb-6">Live Action Detection</h3>
-              <div className="space-y-3">
+          <div className="mt-16 max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">Live Action Detection</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {demoActions.map((action, index) => (
                   <div 
                     key={index}
@@ -447,7 +739,6 @@ const LandingPage: React.FC = () => {
                     </div>
                   </div>
                 ))}
-              </div>
             </div>
           </div>
         </div>
